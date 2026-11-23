@@ -1,4 +1,4 @@
-"""Unit tests for token counting and DIET001–DIET007 analyzer rules."""
+"""Unit tests for token counting and analyzer rules DIET001 through DIET007."""
 
 from __future__ import annotations
 

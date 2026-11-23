@@ -372,9 +372,11 @@ class TestSecurityAndProtocol(unittest.TestCase):
         ]
 
         for case_name, fake_call, expected_regex in cases:
-            with self.subTest(case=case_name):
-                with self.assertRaisesRegex((ValueError, RuntimeError), expected_regex):
-                    _collect_pages(fake_call, "tools/list", "tools", max_pages=5)
+            with (
+                self.subTest(case=case_name),
+                self.assertRaisesRegex((ValueError, RuntimeError), expected_regex),
+            ):
+                _collect_pages(fake_call, "tools/list", "tools", max_pages=5)
 
     @unittest.skipUnless(sys.platform == "win32", "Windows CommandLineToArgvW rules")
     def test_windows_parse_command_string_quotes_spaces_and_backslashes(self) -> None:

@@ -33,7 +33,7 @@ def _style(text: str, code: str, enabled: bool) -> str:
 
 def _bar(ratio: float, width: int = 18) -> str:
     clamped = max(0.0, min(1.0, ratio))
-    filled = int(round(clamped * width))
+    filled = round(clamped * width)
     return "#" * filled + "." * (width - filled)
 
 

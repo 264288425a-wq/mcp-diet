@@ -1,4 +1,4 @@
-"""MCP context bloat analyzer implementing lint rules DIET001–DIET007."""
+"""MCP context bloat analyzer implementing lint rules DIET001 through DIET007."""
 
 from __future__ import annotations
 

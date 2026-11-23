@@ -48,9 +48,7 @@ def _is_valid_jsonrpc_message(msg: object) -> bool:
             return False
         if "result" in msg or "error" in msg:
             return False
-        if "id" in msg and type(msg["id"]) not in (str, int):
-            return False
-        return True
+        return "id" not in msg or type(msg["id"]) in (str, int)
     if "id" not in msg:
         return False
     if msg["id"] is not None and type(msg["id"]) not in (str, int):
@@ -62,9 +60,10 @@ def _validate_envelope(decoded: object) -> list[dict[str, Any]] | None:
     """Validate a single JSON-RPC object or non-empty batch; return list of dicts or None."""
     if isinstance(decoded, dict):
         return [decoded] if _is_valid_jsonrpc_message(decoded) else None
-    if isinstance(decoded, list) and decoded:
-        if all(_is_valid_jsonrpc_message(item) for item in decoded):
-            return decoded
+    if isinstance(decoded, list) and decoded and all(
+        _is_valid_jsonrpc_message(item) for item in decoded
+    ):
+        return decoded
     return None
 
 
@@ -112,7 +111,7 @@ class ProxyInterceptor:
         for msg in messages:
             req_id = msg.get("id")
             method = msg.get("method")
-            if type(req_id) in (str, int) and isinstance(method, str):
+            if (type(req_id) is str or type(req_id) is int) and isinstance(method, str):
                 with self._lock:
                     self._pending_methods[req_id] = method
         return raw_line
@@ -121,7 +120,7 @@ class ProxyInterceptor:
         """Apply optional schema/response slimming to a validated server response in-place."""
         req_id = msg.get("id")
         if (
-            type(req_id) not in (str, int)
+            (type(req_id) is not str and type(req_id) is not int)
             or "method" in msg
             or (("result" in msg) == ("error" in msg))
         ):

@@ -18,7 +18,7 @@ from contextlib import suppress
 from dataclasses import dataclass, field
 from http.client import HTTPMessage, HTTPResponse
 from pathlib import Path
-from typing import Any, BinaryIO, NoReturn
+from typing import IO, Any, NoReturn
 
 from mcp_diet.models import PromptItem, ResourceItem, ServerManifest, ToolItem
 
@@ -49,7 +49,7 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(
         self,
         req: urllib.request.Request,
-        fp: BinaryIO,
+        fp: IO[bytes],
         code: int,
         msg: str,
         headers: HTTPMessage,
@@ -105,7 +105,7 @@ def parse_command_string(cmd: str | list[str]) -> list[str]:
         free_fn(argv)
 
 
-def read_stdio_frame(stream: BinaryIO, max_bytes: int = MAX_STDIO_FRAME_BYTES) -> bytes:
+def read_stdio_frame(stream: IO[bytes], max_bytes: int = MAX_STDIO_FRAME_BYTES) -> bytes:
     """Read one newline-delimited JSON-RPC stdio frame with strict size and EOF checks."""
     line = stream.readline(max_bytes + 1)
     if len(line) > max_bytes:
@@ -219,8 +219,10 @@ def load_manifest_from_file(path: str | Path) -> ServerManifest:
     if isinstance(raw, list):
         tools_raw = [item for item in raw if isinstance(item, dict)]
     elif isinstance(raw, dict):
-        body = raw.get("result") if isinstance(raw.get("result"), dict) else raw
-        server_info = body.get("serverInfo") if isinstance(body.get("serverInfo"), dict) else {}
+        result = raw.get("result")
+        body = result if isinstance(result, dict) else raw
+        info = body.get("serverInfo")
+        server_info = info if isinstance(info, dict) else {}
         server_name = str(
             body.get("server_name")
             or body.get("name")
@@ -247,6 +249,14 @@ def load_manifest_from_file(path: str | Path) -> ServerManifest:
     )
 
 
+def _load_toml_config(text: str) -> dict[str, Any]:
+    if sys.version_info >= (3, 11):
+        import tomllib
+
+        return tomllib.loads(text)
+    raise RuntimeError("Parsing TOML MCP configs requires Python 3.11+.")
+
+
 def discover_config_servers(config_path: str | Path) -> list[DiscoveredServer]:
     """Parse MCP server definitions from JSON (`mcp.json`) or TOML (Codex `config.toml`)."""
     path = Path(config_path)
@@ -254,13 +264,7 @@ def discover_config_servers(config_path: str | Path) -> list[DiscoveredServer]:
     discovered: list[DiscoveredServer] = []
 
     if path.suffix.lower() == ".toml":
-        if sys.version_info >= (3, 11):
-            import tomllib
-
-            data = tomllib.loads(text)
-        else:
-            raise RuntimeError("Parsing TOML MCP configs requires Python 3.11+.")
-        servers_table = data.get("mcp_servers")
+        servers_table = _load_toml_config(text).get("mcp_servers")
         if isinstance(servers_table, dict):
             for name, cfg in servers_table.items():
                 if not isinstance(cfg, dict):

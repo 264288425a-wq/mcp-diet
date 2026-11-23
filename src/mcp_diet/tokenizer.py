@@ -86,7 +86,7 @@ class HeuristicTokenCounter:
 
         # Account lightly for multi-newline formatting
         total += text.count("\n") * 0.35
-        return max(1, int(round(total)))
+        return max(1, round(total))
 
     def count_json(self, data: Any) -> int:
         serialized = json.dumps(data, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
