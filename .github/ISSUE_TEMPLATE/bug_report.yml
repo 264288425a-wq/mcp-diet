@@ -1,0 +1,26 @@
+name: Bug Report
+description: Report a bug in mcp-diet analysis, diffing, or proxy behavior.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Clear description of the bug and unexpected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction steps / command
+      placeholder: |
+        mcp-diet inspect --file ...
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      placeholder: "Python 3.12, OS, mcp-diet 0.1.0"
+    validations:
+      required: true

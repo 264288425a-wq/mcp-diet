@@ -1,0 +1,7 @@
+- id: mcp-diet-check
+  name: mcp-diet context budget check
+  description: Audit MCP tool manifests for context token bloat and enforce budget gates.
+  entry: mcp-diet check
+  language: python
+  types: [json]
+  pass_filenames: false

@@ -1,0 +1,101 @@
+name: "mcp-diet Context Budget Gate"
+description: "Audit MCP server tool schemas for token bloat, compare PR snapshots, and publish Markdown or SARIF reports."
+branding:
+  icon: "activity"
+  color: "green"
+
+inputs:
+  file:
+    description: "Path to an offline MCP tools manifest JSON file."
+    required: false
+    default: ""
+  cmd:
+    description: "Command to launch a live stdio MCP server for inspection."
+    required: false
+    default: ""
+  url:
+    description: "Streamable HTTP endpoint URL of a live MCP server."
+    required: false
+    default: ""
+  baseline:
+    description: "Optional baseline snapshot JSON path to run a PR token diff gate."
+    required: false
+    default: ""
+  max-total:
+    description: "Maximum allowed total tool menu tokens."
+    required: false
+    default: "4000"
+  max-tool:
+    description: "Maximum allowed tokens for any single tool."
+    required: false
+    default: "500"
+  max-increase:
+    description: "Maximum allowed net token increase when baseline is provided."
+    required: false
+    default: "300"
+  fail-on:
+    description: "Minimum finding severity to fail the check (none, warning, error)."
+    required: false
+    default: "error"
+  sarif-output:
+    description: "Optional path to write a SARIF 2.1.0 report for GitHub Code Scanning."
+    required: false
+    default: ""
+  python-version:
+    description: "Python version to use."
+    required: false
+    default: "3.12"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install mcp-diet
+      shell: bash
+      run: pip install --no-cache-dir "${{ github.action_path }}"
+
+    - name: Run mcp-diet audit
+      shell: bash
+      env:
+        INPUT_FILE: ${{ inputs.file }}
+        INPUT_CMD: ${{ inputs.cmd }}
+        INPUT_URL: ${{ inputs.url }}
+        INPUT_BASELINE: ${{ inputs.baseline }}
+        INPUT_MAX_TOTAL: ${{ inputs.max-total }}
+        INPUT_MAX_TOOL: ${{ inputs.max-tool }}
+        INPUT_MAX_INCREASE: ${{ inputs.max-increase }}
+        INPUT_FAIL_ON: ${{ inputs.fail-on }}
+        INPUT_SARIF_OUTPUT: ${{ inputs.sarif-output }}
+      run: |
+        SOURCE_ARGS=()
+        if [ -n "$INPUT_FILE" ]; then
+          SOURCE_ARGS+=(--file "$INPUT_FILE")
+        elif [ -n "$INPUT_CMD" ]; then
+          SOURCE_ARGS+=(--cmd "$INPUT_CMD")
+        elif [ -n "$INPUT_URL" ]; then
+          SOURCE_ARGS+=(--url "$INPUT_URL")
+        else
+          echo "::error::Provide one of file, cmd, or url."
+          exit 2
+        fi
+
+        if [ -n "$INPUT_SARIF_OUTPUT" ]; then
+          mcp-diet inspect "${SOURCE_ARGS[@]}" --format sarif --output "$INPUT_SARIF_OUTPUT"
+        fi
+
+        if [ -n "$INPUT_BASELINE" ]; then
+          mcp-diet diff --baseline "$INPUT_BASELINE" "${SOURCE_ARGS[@]}" \
+            --max-increase "$INPUT_MAX_INCREASE" \
+            --max-total "$INPUT_MAX_TOTAL" \
+            --format markdown | tee -a "$GITHUB_STEP_SUMMARY"
+        else
+          mcp-diet check "${SOURCE_ARGS[@]}" \
+            --max-total "$INPUT_MAX_TOTAL" \
+            --max-tool "$INPUT_MAX_TOOL" \
+            --fail-on "$INPUT_FAIL_ON" \
+            --format markdown | tee -a "$GITHUB_STEP_SUMMARY"
+        fi

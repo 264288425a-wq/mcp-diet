@@ -1,0 +1,121 @@
+{
+  "serverInfo": {
+    "name": "example-bloated-mcp",
+    "version": "1.0.0"
+  },
+  "tools": [
+    {
+      "name": "query_analytics_warehouse",
+      "description": "Execute arbitrary analytical queries against the multi-region enterprise analytics warehouse. Make sure to specify dataset identifiers, timeframe bounds, partition keys, column projections, output formatting flags, and pagination cursors carefully. Calling this tool without strict filters may return tens of thousands of rows and consume substantial token budgets in coding agents. Always double-check timezone offsets, region codes, aggregation granularity, and caching parameters before executing queries in production environments. Example: pass dataset='events', region='US_EAST_1', and limit=25 to inspect recent telemetry records.",
+      "inputSchema": {
+        "type": "object",
+        "title": "QueryAnalyticsWarehouseInput",
+        "additionalProperties": true,
+        "properties": {
+          "dataset": {
+            "type": "string",
+            "title": "Dataset Name",
+            "description": "The fully qualified analytics dataset identifier to query."
+          },
+          "region": {
+            "type": "string",
+            "title": "Cloud Region",
+            "enum": [
+              "US_EAST_1", "US_EAST_2", "US_WEST_1", "US_WEST_2",
+              "EU_WEST_1", "EU_WEST_2", "EU_WEST_3", "EU_CENTRAL_1",
+              "EU_NORTH_1", "AP_SOUTH_1", "AP_NORTHEAST_1", "AP_NORTHEAST_2",
+              "AP_NORTHEAST_3", "AP_SOUTHEAST_1", "AP_SOUTHEAST_2", "AP_EAST_1",
+              "CA_CENTRAL_1", "SA_EAST_1", "ME_SOUTH_1", "AF_SOUTH_1",
+              "IL_CENTRAL_1", "MX_CENTRAL_1"
+            ]
+          },
+          "filter": {
+            "type": "object",
+            "title": "NestedFilterSpec",
+            "properties": {
+              "group": {
+                "type": "object",
+                "title": "ConditionGroup",
+                "properties": {
+                  "clause": {
+                    "type": "object",
+                    "title": "ClauseNode",
+                    "properties": {
+                      "nested": {
+                        "type": "object",
+                        "title": "LeafMatcher",
+                        "properties": {
+                          "field": { "type": "string", "title": "Field" },
+                          "operator": { "type": "string", "title": "Operator" },
+                          "value": { "type": "string", "title": "Value" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "limit": { "type": "integer", "title": "Limit" },
+          "offset": { "type": "integer", "title": "Offset" },
+          "sort_by": { "type": "string", "title": "Sort By" },
+          "sort_dir": { "type": "string", "title": "Sort Dir" },
+          "include_nulls": { "type": "boolean", "title": "Include Nulls" },
+          "include_meta": { "type": "boolean", "title": "Include Meta" },
+          "format": { "type": "string", "title": "Output Format" },
+          "timezone": { "type": "string", "title": "Timezone" },
+          "dry_run": { "type": "boolean", "title": "Dry Run" },
+          "cache_ttl": { "type": "integer", "title": "Cache TTL" }
+        },
+        "required": ["dataset"]
+      }
+    },
+    {
+      "name": "export_analytics_report",
+      "description": "Export a filtered analytics report to CSV or JSON.",
+      "inputSchema": {
+        "type": "object",
+        "title": "ExportAnalyticsReportInput",
+        "properties": {
+          "dataset": { "type": "string", "title": "Dataset Name" },
+          "filter": {
+            "type": "object",
+            "title": "NestedFilterSpec",
+            "properties": {
+              "group": {
+                "type": "object",
+                "title": "ConditionGroup",
+                "properties": {
+                  "clause": {
+                    "type": "object",
+                    "title": "ClauseNode",
+                    "properties": {
+                      "nested": {
+                        "type": "object",
+                        "title": "LeafMatcher",
+                        "properties": {
+                          "field": { "type": "string", "title": "Field" },
+                          "operator": { "type": "string", "title": "Operator" },
+                          "value": { "type": "string", "title": "Value" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "required": ["dataset"]
+      }
+    },
+    {
+      "name": "health_check",
+      "description": "Return server uptime and health status.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ]
+}
