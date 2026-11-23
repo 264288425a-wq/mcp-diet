@@ -61,6 +61,7 @@ runs:
     - name: Run mcp-diet audit
       shell: bash
       env:
+        PYTHONIOENCODING: "utf-8"
         INPUT_FILE: ${{ inputs.file }}
         INPUT_CMD: ${{ inputs.cmd }}
         INPUT_URL: ${{ inputs.url }}
